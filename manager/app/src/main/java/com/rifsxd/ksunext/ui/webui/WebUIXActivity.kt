@@ -15,9 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.dergoogler.mmrl.platform.Platform
+import com.dergoogler.mmrl.platform.model.ModId
 import com.dergoogler.mmrl.ui.component.Loading
-import com.dergoogler.mmrl.webui.interfaces.WXOptions
-import com.dergoogler.mmrl.webui.model.ModId
 import com.dergoogler.mmrl.webui.screen.WebUIScreen
 import com.dergoogler.mmrl.webui.util.rememberWebUIOptions
 import com.rifsxd.ksunext.BuildConfig
@@ -27,6 +26,24 @@ import kotlinx.coroutines.launch
 
 class WebUIXActivity : ComponentActivity() {
     private lateinit var webView: WebView
+
+    private val userAgent
+        get(): String {
+            val ksuVersion = BuildConfig.VERSION_CODE
+
+            val platform = Platform.get("Unknown") {
+                platform.name
+            }
+
+            val platformVersion = Platform.get(-1) {
+                moduleManager.versionCode
+            }
+
+            val osVersion = Build.VERSION.RELEASE
+            val deviceModel = Build.MODEL
+
+            return "KernelSU Next/$ksuVersion (Linux; Android $osVersion; $deviceModel; $platform/$platformVersion)"
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +87,7 @@ class WebUIXActivity : ComponentActivity() {
                 }
 
                 val webDebugging = prefs.getBoolean("enable_web_debugging", false)
+                val erudaInject = prefs.getBoolean("use_webuix_eruda", false)
                 val dark = isSystemInDarkTheme()
 
                 val options = rememberWebUIOptions(
@@ -77,7 +95,9 @@ class WebUIXActivity : ComponentActivity() {
                     debug = webDebugging,
                     appVersionCode = BuildConfig.VERSION_CODE,
                     isDarkMode = dark,
-                    cls = WebUIXActivity::class.java
+                    enableEruda = erudaInject,
+                    cls = WebUIXActivity::class.java,
+                    userAgentString = userAgent
                 )
 
                 WebUIScreen(
